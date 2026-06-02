@@ -54,36 +54,46 @@ export default function App() {
   const toggleTheme = () => {
     setTheme((prev) => (prev === 'light' ? 'dark' : 'light'));
   };
+const API_BASE_URL = "https://store-retingsystem.onrender.com";
 
-  // API Request Helper
-  const apiCall = async (url, options = {}) => {
-    const headers = {
-      'Content-Type': 'application/json',
-      ...options.headers,
-    };
-
-    if (token) {
-      headers['Authorization'] = `Bearer ${token}`;
-    }
-
-    try {
-      const response = await fetch(url, { ...options, headers });
-      const data = await response.json();
-
-      if (!response.ok) {
-        // If JWT expired, auto log out
-        if (response.status === 403 && data.message.includes('expired')) {
-          logoutUser();
-        }
-        throw new Error(data.message || 'Request failed.');
-      }
-      return data;
-    } catch (err) {
-      showToast('Error', err.message, 'error');
-      throw err;
-    }
+// API Request Helper
+const apiCall = async (url, options = {}) => {
+  const headers = {
+    'Content-Type': 'application/json',
+    ...options.headers,
   };
 
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`;
+  }
+
+  try {
+    const response = await fetch(`${API_BASE_URL}${url}`, {
+      ...options,
+      headers,
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      // If JWT expired, auto log out
+      if (
+        response.status === 403 &&
+        data.message &&
+        data.message.includes('expired')
+      ) {
+        logoutUser();
+      }
+
+      throw new Error(data.message || 'Request failed.');
+    }
+
+    return data;
+  } catch (err) {
+    showToast('Error', err.message, 'error');
+    throw err;
+  }
+};
   // Get initial character badge for avatar
   const getAvatarChar = (name) => {
     if (!name) return 'U';
